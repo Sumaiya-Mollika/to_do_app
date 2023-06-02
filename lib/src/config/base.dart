@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
-import 'package:to_do_app/src/controller/task-controller.dart';
+import 'package:to_do_app/src/controller/todo-controller.dart';
 
 mixin Base {
-  final taskC = Get.put(TaskController());
- 
+  final todoC = Get.put(TaskController());
 }
