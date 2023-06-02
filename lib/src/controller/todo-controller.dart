@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:to_do_app/src/config/api_end_point.dart';
 import 'package:to_do_app/src/model/todo.dart';
 import 'package:to_do_app/src/view/home_screen.dart';
 import 'package:to_do_app/src/widgets/custom_snackbar.dart';
@@ -9,10 +10,13 @@ class TaskController extends GetxController {
   final todoTitle = RxString('');
   final description = RxString('');
   final isCompleted = RxBool(false);
-
   final todoList = RxList<Todo>([]);
 
-  final url = 'https://graphqlzero.almansi.me/api';
+  @override
+  void onInit() {
+    super.onInit();
+    fetchTodos();
+  }
 
   final Dio _dio = Dio();
 
@@ -33,7 +37,7 @@ class TaskController extends GetxController {
 
     try {
       final response = await _dio.post(
-        url,
+        ApiEndPoint.baseUrl(),
         options: Options(headers: {'Content-Type': 'application/json'}),
         data: {
           'query': mutation,
@@ -50,7 +54,13 @@ class TaskController extends GetxController {
             textColor: Colors.white,
             color: Colors.green,
             message: '');
-        todoTitle.value = '';
+
+        final todos = Todo.fromJson(
+            response.data['data']['createTodo'] as Map<String, dynamic>);
+
+        print(todos);
+        todoList.insert(0, todos);
+        clearData();
         Get.to(HomeScreen());
       } else {
         customSnackbar(
@@ -85,7 +95,7 @@ class TaskController extends GetxController {
     ''';
 
       final response = await Dio().post(
-        url,
+        ApiEndPoint.baseUrl(),
         options: Options(headers: {'Content-Type': 'application/json'}),
         data: {'query': query},
       );
@@ -106,8 +116,6 @@ class TaskController extends GetxController {
 
 // Delete todo
   Future<void> deleteTodo(String todoId) async {
-    final url = 'https://graphqlzero.almansi.me/api';
-
     final mutation = '''
     mutation DeleteTodo(\$id: ID!) {
       deleteTodo(id: \$id)
@@ -116,7 +124,7 @@ class TaskController extends GetxController {
 
     try {
       final response = await _dio.post(
-        url,
+        ApiEndPoint.baseUrl(),
         options: Options(headers: {'Content-Type': 'application/json'}),
         data: {
           'query': mutation,
@@ -174,7 +182,7 @@ class TaskController extends GetxController {
 
     try {
       final response = await _dio.post(
-        url,
+        ApiEndPoint.baseUrl(),
         options: Options(headers: {'Content-Type': 'application/json'}),
         data: {
           'query': mutation,
@@ -203,7 +211,7 @@ class TaskController extends GetxController {
           color: Colors.green,
           message: '',
         );
-        todoTitle.value = '';
+        clearData();
         Get.to(HomeScreen());
       } else {
         customSnackbar(
@@ -223,5 +231,10 @@ class TaskController extends GetxController {
         message: '',
       );
     }
+  }
+
+  clearData() {
+    todoTitle.value = '';
+    isCompleted.value = false;
   }
 }
